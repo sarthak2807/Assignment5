@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Interactive Quiz App</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <div class="quiz-container">
+        <h1>Take the Quiz</h1>
+        <form id="quiz-form">
+            {% for q in quiz %}
+            <div class="question-block">
+                <h2>{{ q.question }}</h2>
+                <div class="options">
+                    {% for option in q.options %}
+                    <label>
+                        <input type="radio" name="question-{{ loop.index0 }}" value="{{ option }}" required> {{ option }}
+                    </label><br>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endfor %}
+            <button type="button" onclick="submitQuiz()">Submit</button>
+        </form>
+        <div id="result"></div>
+        <button type="button" id="retry" style="display:none;" onclick="retryQuiz()">Try Again</button>
+    </div>
+
+    <script>
+        function submitQuiz() {
+            const formData = new FormData(document.getElementById('quiz-form'));
+            const answers = {};
+            formData.forEach((value, key) => {
+                answers[key.split('-')[1]] = value;
+            });
+
+            fetch('/submit', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ answers: answers }),
+            })
+            .then(response => response.json())
+            .then(data => {
+                document.getElementById('result').innerHTML = `<h2>Your score is: ${data.score}/${data.total}</h2>`;
+                document.getElementById('retry').style.display = "block";
+            });
+        }
+
+        function retryQuiz() {
+            document.getElementById('quiz-form').reset();
+            document.getElementById('result').innerHTML = "";
+            document.getElementById('retry').style.display = "none";
+        }
+    </script>
+</body>
+</html>
+
